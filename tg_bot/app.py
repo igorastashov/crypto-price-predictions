@@ -22,6 +22,10 @@ from aiogram import Bot, Dispatcher, F, Router, html
 
 import pmdarima as pm
 
+from pre_processing import data_loader
+from plots import plot_history, plot_predict
+
+
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
@@ -33,39 +37,38 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 
-async def generate_stock_graph(time_range: List[str]):
-    tickers = ['BTC-USD']
-    # start_date = '2023-01-01'
-    # end_date = datetime.now()
-    start_date, end_date = time_range.split()
+# async def generate_stock_graph(start_date, end_date):
+#     tickers = ['BTC-USD']
+#     # start_date = '2023-01-01'
+#     # end_date = datetime.now()
+#
+#     stock_history = pd.concat((yf.download(ticker,
+#                                            start=start_date,
+#                                            end=end_date).assign(tkr=ticker) for ticker in tickers), ignore_index=False)
+#
+#     # Create the graph
+#     plt.figure(figsize=(12, 5))
+#     plt.plot(stock_history['Adj Close'])
+#     plt.title(f'{tickers[0]} Stock Price History')
+#     plt.xlabel('Date')
+#     plt.ylabel('Price')
+#
+#     buf = io.BytesIO()
+#     plt.savefig(buf, format='png')
+#     buf.seek(0)
+#     file = BufferedInputFile(buf.read(), filename="stock_price_history.png")
+#     return file
 
-    stock_history = pd.concat((yf.download(ticker,
-                                           start=start_date,
-                                           end=end_date).assign(tkr=ticker) for ticker in tickers), ignore_index=False)
 
-    # Create the graph
-    plt.figure(figsize=(12, 5))
-    plt.plot(stock_history['Adj Close'])
-    plt.title(f'{tickers[0]} Stock Price History')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    file = BufferedInputFile(buf.read(), filename="stock_price_history.png")
-    return file
-
-
-async def data_loader():
-    start_date = '2023-01-01'
-    end_date = datetime.now()
-    tickers = ['BTC-USD']
-
-    df = yf.download(tickers[0], start=start_date, end=end_date)
-    data = df[['Adj Close']].copy()
-    data.columns = data.columns.str.lower()
-    return data, df
+# async def data_loader():
+#     start_date = '2023-01-01'
+#     end_date = datetime.now()
+#     tickers = ['BTC-USD']
+#
+#     df = yf.download(tickers[0], start=start_date, end=end_date)
+#     data = df[['Adj Close']].copy()
+#     data.columns = data.columns.str.lower()
+#     return data, df
 
 
 async def predict(data, df):
@@ -141,16 +144,25 @@ async def get_range_date(message: types.Message, state: FSMContext) -> None:
                         "2023-01-01 2023-12-31):",
                         reply_markup=types.ReplyKeyboardRemove())
 
+# Акции
+TICKERS = ['BTC-USD']
+# Колонка для парсинга с yfinance
+COL_VALUE = 'Adj Close'
+
 
 @dp.message(Form.time_range)
 async def send_stock_history(message: types.Message, state: FSMContext):
+    # Получить временной промежуток
     time_range = await state.update_data(time_range=message.text)
-    time_range = time_range['time_range']
-    await state.clear()
 
+    start_date, end_date = time_range['time_range'].split()
+    await state.clear()
     try:
-        file = await generate_stock_graph(time_range)
-        await bot.send_photo(message.chat.id, photo=file)
+        data = await data_loader(start_date, end_date, TICKERS, COL_VALUE)
+        print(data)
+        image = await plot_history(data, TICKERS)
+        print(image)
+        await bot.send_photo(message.chat.id, photo=image)
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
 
