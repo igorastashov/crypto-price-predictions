@@ -35,7 +35,9 @@ async def plot_predict(data):
     plt.plot(data[['history', 'prediction']])
     plt.fill_between(x=data.index, y1=data['left_int'], y2=data['right_int'], color='b', alpha=.1)
     plt.legend(['history', 'prediction'])
+    plt.xlabel('Дата')
     plt.xticks(rotation=90)
+    plt.ylabel('Стоимость')
     plt.tick_params(axis="x", labelsize=6)
     plt.title(f"Прогноз")
 

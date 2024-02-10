@@ -15,6 +15,8 @@ from plots import plot_history, plot_predict
 from models import arima_model
 from post_processing import post_processing_data, get_data_for_plot
 
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +29,7 @@ dp = Dispatcher()
 
 
 class Form(StatesGroup):
+    coin = State()
     time_range = State()
 
 
@@ -45,11 +48,37 @@ async def welcome(message: types.Message) -> None:
 
 
 @dp.message(F.text.lower() == "динамика стоимости")
-async def get_range_date(message: types.Message, state: FSMContext) -> None:
+async def get_name_ticker(message: types.Message, state: FSMContext) -> None:
+    builder = InlineKeyboardBuilder()
+    builder.add(types.InlineKeyboardButton(
+        text="BTC-USD",
+        callback_data="btc_usd")
+    )
+
+    builder.add(types.InlineKeyboardButton(
+        text="ETH-USD",
+        callback_data="eth_usd")
+    )
+    await message.answer(
+        "Выберите монету:",
+        reply_markup=builder.as_markup()
+    )
+
+
+@dp.callback_query(lambda query: query.data in ["btc_usd", "eth_usd"])
+async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
+    selected_coin = callback.data
+    await bot.answer_callback_query(callback.id)
+    await state.update_data(coin=selected_coin)
+
+    if selected_coin == "btc_usd":
+        await bot.send_message(callback.from_user.id, "Вы выбрали BTC-USD.")
+
+    elif selected_coin == "eth_usd":
+        await bot.send_message(callback.from_user.id, "Вы выбрали ETH-USD.")
+
     await state.set_state(Form.time_range)
-    await message.reply("Введите временной интервал для построения графика в формате YYYY-MM-DD YYYY-MM-DD (например, "
-                        "2023-01-01 2023-12-31):",
-                        reply_markup=types.ReplyKeyboardRemove())
+    await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате YYYY-MM-DD YYYY-MM-DD (например, \"2023-01-01 2023-12-31\"):")
 
 # Акции
 TICKERS = ['BTC-USD']
@@ -85,7 +114,7 @@ async def send_stock_history(message: types.Message, state: FSMContext):
 PERIODS = 7
 
 # Последнее кол-во дней для отображения на графике совместно с предсказанием
-BACK_DAYS = 365
+BACK_DAYS = 15
 
 
 @dp.message(F.text.lower() == "предсказание на следующую неделю")
