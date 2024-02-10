@@ -1,4 +1,6 @@
 .idea/
 .env
+tg_bot/__pycache__/
 
-tg_bot\stock_price_history.png
+tg_bot/stock_price_history.png
+tg_bot/__pycache__/plots.cpython-311.pyc

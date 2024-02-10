@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import io
 from aiogram.types import BufferedInputFile
-from typing import List
-import pandas as pd
 
 
 async def plot_history(stock_history, tickers):
@@ -27,7 +25,7 @@ async def plot_history(stock_history, tickers):
     return file
 
 
-def plot_predict(data):
+async def plot_predict(data):
     """
     Простая визуализация предсказания
     :param data: Подготовленные данные для визуализации см. `post_processing.py: get_data_for_plot`
