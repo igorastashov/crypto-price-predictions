@@ -52,12 +52,12 @@ async def get_name_ticker(message: types.Message, state: FSMContext) -> None:
     builder = InlineKeyboardBuilder()
     builder.add(types.InlineKeyboardButton(
         text="BTC-USD",
-        callback_data="btc_usd")
+        callback_data="BTC-USD")
     )
 
     builder.add(types.InlineKeyboardButton(
         text="ETH-USD",
-        callback_data="eth_usd")
+        callback_data="ETH-USD")
     )
     await message.answer(
         "Выберите монету:",
@@ -65,23 +65,30 @@ async def get_name_ticker(message: types.Message, state: FSMContext) -> None:
     )
 
 
-@dp.callback_query(lambda query: query.data in ["btc_usd", "eth_usd"])
+# Акции
+TICKERS = []
+
+
+@dp.callback_query(lambda query: query.data in ["BTC-USD", "ETH-USD"])
 async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
     selected_coin = callback.data
+    TICKERS.append(selected_coin)
+
     await bot.answer_callback_query(callback.id)
     await state.update_data(coin=selected_coin)
 
-    if selected_coin == "btc_usd":
+    if selected_coin == "BTC-USD":
         await bot.send_message(callback.from_user.id, "Вы выбрали BTC-USD.")
 
-    elif selected_coin == "eth_usd":
+    elif selected_coin == "ETH-USD":
         await bot.send_message(callback.from_user.id, "Вы выбрали ETH-USD.")
 
     await state.set_state(Form.time_range)
-    await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате YYYY-MM-DD YYYY-MM-DD (например, \"2023-01-01 2023-12-31\"):")
+    await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате:"
+                                                  " 'YYYY-MM-DD YYYY-MM-DD' (например, 2023-01-01 2023-12-31\):"
+                           )
 
-# Акции
-TICKERS = ['BTC-USD']
+
 # Колонка для парсинга с yfinance
 COL_VALUE = 'Adj Close'
 
@@ -101,10 +108,12 @@ async def send_stock_history(message: types.Message, state: FSMContext):
     """
     time_range = await state.update_data(time_range=message.text)
     start_date, end_date = time_range['time_range'].split()
+
     await state.clear()
     try:
         data = await data_loader(start_date, end_date, TICKERS, COL_VALUE)
         image = await plot_history(data, TICKERS)
+        TICKERS.pop()
         await bot.send_photo(message.chat.id, photo=image)
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
