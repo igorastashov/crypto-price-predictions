@@ -1,5 +1,5 @@
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
 
 async def data_loader(start_date, end_date, tickers, col_value):
