@@ -17,6 +17,8 @@ from post_processing import post_processing_data, get_data_for_plot
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+import re
+
 
 # Колонка для парсинга с yfinance
 COL_VALUE = 'Adj Close'
@@ -97,8 +99,8 @@ async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
         await bot.send_message(callback.from_user.id, "Вы выбрали ETH-USD.")
 
     await state.set_state(Form.time_range)
-    await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате:"
-                                                  " 'YYYY-MM-DD YYYY-MM-DD' (например, `2023-01-01 2023-12-31`):"
+    await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате: "
+                                                  "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):"
                            )
 
 
@@ -115,7 +117,14 @@ async def send_stock_history(message: types.Message, state: FSMContext):
     Если произошла ошибка при загрузке данных или построении графика,
     будет отправлено сообщение с описанием ошибки пользователю.
     """
+    pattern = re.compile(r'^\d{4}-\d{2}-\d{2} \d{4}-\d{2}-\d{2}$')
+
     time_range = await state.update_data(time_range=message.text)
+    print(time_range['time_range'])
+    if not pattern.match(time_range['time_range']):
+        await message.reply("Неверный формат временного интервала. Попробуй все заново")
+        return
+
     start_date, end_date = time_range['time_range'].split()
 
     await state.clear()
