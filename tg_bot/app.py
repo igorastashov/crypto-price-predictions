@@ -204,9 +204,13 @@ async def predict_next_days(message: types.Message, state: FSMContext):
         )
         image = await plot_predict(concat_data)
         await bot.send_photo(message.chat.id, photo=image)
+        TICKERS_PREDICT.pop()
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
 
+    horizon_predict = None
+    await state.update_data(horizon_predict=None)
+    await state.update_data(coin=None)
     await state.set_state(Form.expect)
 
 
