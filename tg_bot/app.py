@@ -17,8 +17,6 @@ from post_processing import post_processing_data, get_data_for_plot
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
 
 # Колонка для парсинга с yfinance
 COL_VALUE = 'Adj Close'
@@ -47,13 +45,16 @@ class Form(StatesGroup):
     coin = State()
     time_range = State()
     horizon_predict = State()
+    review = State()
+    expect = State()
 
 
 @dp.message(Command('start'))
 async def welcome(message: types.Message) -> None:
     kb = [
         [types.KeyboardButton(text="Динамика стоимости")],
-        [types.KeyboardButton(text="Предсказание на следующую неделю")]
+        [types.KeyboardButton(text="Предсказание на будущее")],
+        [types.KeyboardButton(text="Оставить отзыв")]
     ]
     keyboard = types.ReplyKeyboardMarkup(
         keyboard=kb,
@@ -81,7 +82,6 @@ async def get_name_ticker(message: types.Message) -> None:
     )
 
 
-
 @dp.callback_query(lambda query: query.data in ["BTC-USD", "ETH-USD"])
 async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
     selected_coin = callback.data
@@ -98,9 +98,8 @@ async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
 
     await state.set_state(Form.time_range)
     await bot.send_message(callback.from_user.id, "Введите временной интервал для построения графика в формате:"
-                                                  " 'YYYY-MM-DD YYYY-MM-DD' (например, 2023-01-01 2023-12-31\):"
+                                                  " 'YYYY-MM-DD YYYY-MM-DD' (например, `2023-01-01 2023-12-31`):"
                            )
-
 
 
 @dp.message(Form.time_range)
@@ -128,8 +127,10 @@ async def send_stock_history(message: types.Message, state: FSMContext):
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
 
+    await state.set_state(Form.expect)
 
-@dp.message(F.text.lower() == "предсказание на следующую неделю")
+
+@dp.message(F.text.lower() == "предсказание на будущее")
 async def get_name_ticker_predict(message: types.Message) -> None:
     builder = InlineKeyboardBuilder()
     builder.add(types.InlineKeyboardButton(
@@ -148,7 +149,7 @@ async def get_name_ticker_predict(message: types.Message) -> None:
 
 
 @dp.callback_query(lambda query: query.data in ["BTC-USD_predict", "ETH-USD_predict"])
-async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
+async def get_find_ticker_predict(callback: types.CallbackQuery, state: FSMContext):
     selected_coin = callback.data
     TICKERS_PREDICT.append(selected_coin[:-8])
 
@@ -197,6 +198,41 @@ async def predict_next_days(message: types.Message, state: FSMContext):
         await bot.send_photo(message.chat.id, photo=image)
     except Exception as e:
         await message.reply(f"An error occurred: {e}")
+
+    await state.set_state(Form.expect)
+
+
+@dp.message(F.text.lower() == "оставить отзыв")
+async def get_callback(message: types.Message):
+    builder = InlineKeyboardBuilder()
+    builder.add(types.InlineKeyboardButton(
+        text="Приложение отличное!",
+        callback_data="good")
+    )
+    builder.add(types.InlineKeyboardButton(
+        text="Приложение ужасное!",
+        callback_data="bed")
+    )
+    await message.answer(
+        text="Ваша оценка приложения?:",
+        reply_markup=builder.as_markup()
+    )
+
+
+@dp.callback_query(lambda query: query.data in ["good", "bed"])
+async def get_feedback(callback: types.CallbackQuery, state: FSMContext):
+    review = callback.data
+    if review == "good":
+        await callback.answer(
+            text="Увидимся снова!",
+            show_alert=True
+        )
+    elif review == "bed":
+        await callback.answer(
+            text="Больше не увидимся!",
+            show_alert=True
+        )
+    await state.set_state(Form.expect)
 
 
 # Start polling
