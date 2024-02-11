@@ -17,6 +17,8 @@ from post_processing import post_processing_data, get_data_for_plot
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 
 # Колонка для парсинга с yfinance
 COL_VALUE = 'Adj Close'
@@ -177,6 +179,10 @@ async def predict_next_days(message: types.Message, state: FSMContext):
     start_date = '2023-01-01'
     # Время окончания рассмотрения данных
     end_date = datetime.now()
+
+    if not message.text.isdigit():
+        await message.reply("Пожалуйста, введите корректное число дней для предсказания (целое число).")
+        return
 
     # Горизонт предсказаний
     horizon_predict = await state.update_data(horizon_predict=message.text)
