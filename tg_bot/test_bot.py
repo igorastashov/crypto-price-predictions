@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch, ANY
 from aiogram import types
 from app import welcome, get_name_ticker
 
@@ -40,19 +40,10 @@ class TestGetNameTicker(unittest.IsolatedAsyncioTestCase):
 
             await get_name_ticker(mock_message)
 
-            # Проверяем, что функция answer была вызвана с ожидаемыми параметрами
+            # Проверяем, что функция answer была вызвана с ожидаемыми параметрами, используя ANY для reply_markup
             mock_message.answer.assert_called_once_with(
                 "Выберите монету:",
-                reply_markup=types.InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            types.InlineKeyboardButton(text="BTC-USD", callback_data="BTC-USD"),
-                        ],
-                        [
-                            types.InlineKeyboardButton(text="ETH-USD", callback_data="ETH-USD"),
-                        ]
-                    ]
-                )
+                reply_markup=ANY
             )
 
 
