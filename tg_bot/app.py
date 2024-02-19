@@ -250,7 +250,7 @@ async def send_crypto_candle(message: types.Message, state: FSMContext):
     time_rangers = await state.update_data(time_rangers=message.text)
     if not pattern.match(time_rangers["time_rangers"]):
         await message.reply(
-            "Неверный формат временного интервала." " Попробуй все заново"
+            "Неверный формат временного интервала. Попробуй все заново."
         )
         return
 
