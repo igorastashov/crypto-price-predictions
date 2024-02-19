@@ -2,6 +2,9 @@ import unittest
 from unittest.mock import MagicMock, AsyncMock, patch, ANY, call
 from aiogram import types
 from app import welcome, get_name_ticker, get_find_ticker, send_stock_history
+from app import get_name_ticker_01, get_find_ticker_01
+
+
 from app import Form
 from pre_processing import data_loader
 from plots import plot_history
@@ -152,6 +155,63 @@ class TestSendStockHistory(unittest.IsolatedAsyncioTestCase):
 
         # Проверяем, что отправлено сообщение об ошибке
         message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
+
+
+class TestGetNameTicker01(unittest.IsolatedAsyncioTestCase):
+    @patch("app.types.Message")
+    async def test_get_name_ticker_01_handler(self, mock_message):
+        mock_message.text = "Динамика среднемесячной стоимости"
+        mock_message.answer = AsyncMock()
+
+        with patch("app.F") as mock_F:
+            mock_F.text.lower.return_value = "динамика среднемесячной стоимости"
+
+            await get_name_ticker_01(mock_message)
+
+            mock_message.answer.assert_called_once_with(
+                "Выберите монету:",
+                reply_markup=ANY
+            )
+
+
+class TestGetFindTicker01(unittest.IsolatedAsyncioTestCase):
+    @patch("app.types.CallbackQuery")
+    @patch("app.FSMContext")
+    @patch("app.bot")
+    async def test_get_find_ticker_01_handler(self, mock_bot, mock_fsm_context, mock_callback_query):
+        test_cases = [
+            ("BTC-USD avg", "BTC-USD"),
+            ("ETH-USD avg", "ETH-USD")
+        ]
+        for selected_coin, expected_message in test_cases:
+            callback_instance = mock_callback_query.return_value
+            callback_instance.data = selected_coin
+            callback_instance.from_user.id = 123456789  # Пример ID пользователя
+
+            # Мокируем методы bot.answer_callback_query, bot.send_message и state.update_data
+            mock_bot.answer_callback_query = AsyncMock()
+            mock_bot.send_message = AsyncMock()
+            mock_fsm_context.update_data = AsyncMock()
+            mock_fsm_context.set_state = AsyncMock()
+
+            await get_find_ticker_01(callback_instance, mock_fsm_context)
+
+            # Проверяем, что функция answer_callback_query была вызвана с ожидаемыми параметрами
+            mock_bot.answer_callback_query.assert_called_once_with(callback_instance.id)
+
+            # Проверяем, что функция update_data была вызвана с ожидаемыми параметрами
+            mock_fsm_context.update_data.assert_called_once_with(coin=selected_coin)
+
+            # Проверяем, что функция set_state была вызвана с ожидаемыми параметрами
+            mock_fsm_context.set_state.assert_called_once_with(ANY)
+
+            # Проверяем, что функция send_message была вызвана с ожидаемыми параметрами
+            expected_calls = [
+                call(callback_instance.from_user.id, f"Вы выбрали {expected_message}."),
+                call(callback_instance.from_user.id, "Введите временной интервал для построения графика средней стоимости в формате: "
+                                                            "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):")
+            ]
+            mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
 
 
