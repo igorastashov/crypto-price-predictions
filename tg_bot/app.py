@@ -183,7 +183,7 @@ async def send_crypto_avg(message: types.Message, state: FSMContext):
     time_ranger = await state.update_data(time_ranger=message.text)
     if not pattern.match(time_ranger["time_ranger"]):
         await message.reply(
-            "Неверный формат временного интервала." " Попробуй все заново"
+            "Неверный формат временного интервала." " Попробуй все заново."
         )
         return
 

@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, AsyncMock, patch, ANY, call
 from aiogram import types
 from app import welcome, get_name_ticker, get_find_ticker, send_stock_history
-from app import get_name_ticker_01, get_find_ticker_01
+from app import get_name_ticker_01, get_find_ticker_01, send_crypto_avg
 
 
 from app import Form
@@ -213,6 +213,66 @@ class TestGetFindTicker01(unittest.IsolatedAsyncioTestCase):
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
+
+class TestSendCryptoAvg(unittest.IsolatedAsyncioTestCase):
+    @patch("pre_processing.data_loader", new_callable=AsyncMock)
+    @patch("plots.viz_avg", new_callable=AsyncMock)
+    @patch("app.bot", new_callable=AsyncMock)
+    async def test_send_stock_history_success(self, mock_bot, mock_data_loader, mock_plot_history):
+
+        # Устанавливаем состояние
+        state = AsyncMock()
+
+        async def async_update_data(*args, **kwargs):
+            return {"time_ranger": "2023-01-01 2023-12-31"}
+
+        state.update_data = AsyncMock(side_effect=async_update_data)
+
+        # Задаем сообщение от пользователя
+        message = MagicMock()
+
+        async def async_reply(*args, **kwargs):
+            pass
+
+        message.reply = AsyncMock(side_effect=async_reply)
+        message.text = "2023-01-01 2023-12-31"  # Устанавливаем текст сообщения
+        message.chat.id = 123456789  # Пример ID чата
+
+        # Устанавливаем ожидаемый результат загрузки данных
+        data_sample = pd.DataFrame({"Date": ['2024-01-01', '2024-01-02', '2024-02-03'],
+                                    "BTC-USD": [10, 20, 30]}).set_index('Date', inplace=False)
+
+        mock_data_loader.return_value = data_sample
+
+        try:
+            # Вызываем тестируемую функцию
+            await send_crypto_avg(message, state)
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+
+    async def test_invalid_time_range_format(self):
+        # Устанавливаем состояние
+        state = AsyncMock()
+
+        async def async_update_data(*args, **kwargs):
+            return {"time_ranger": "invalid_time_range_format"}
+
+        state.update_data = AsyncMock(side_effect=async_update_data)
+
+        # Задаем сообщение от пользователя
+        message = MagicMock()
+
+        async def async_reply(*args, **kwargs):
+            pass
+
+        message.reply = AsyncMock(side_effect=async_reply)
+        message.text = "invalid_time_range_format"  # Неправильный формат временного интервала
+
+        # Вызываем тестируемую функцию
+        await send_crypto_avg(message, state)
+
+        # Проверяем, что отправлено сообщение об ошибке
+        message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
 
 
 
