@@ -3,7 +3,10 @@
 tg_bot/__pycache__/
 tg_bot/.coverage
 tg_bot/htmlcov
+!tg_bot/htmlcov/app_py.html
 .coverage
+
 
 tg_bot/stock_price_history.png
 tg_bot/__pycache__/plots.cpython-311.pyc
+tg_bot/__init__.py

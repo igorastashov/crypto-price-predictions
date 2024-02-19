@@ -1,12 +1,14 @@
 import unittest
-from unittest.mock import MagicMock, AsyncMock, patch, ANY, call
+from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
+
 from aiogram import types
-from app import welcome, get_name_ticker, get_find_ticker, send_stock_history
-from app import get_name_ticker_01, get_find_ticker_01, send_crypto_avg
-from app import get_name_ticker_02, get_find_ticker_02, send_crypto_candle
-from app import get_name_ticker_predict, get_find_ticker_predict, predict_next_days
-from app import get_callback, get_feedback, main
-import asyncio
+
+from app import (get_callback, get_feedback, get_find_ticker,
+                 get_find_ticker_01, get_find_ticker_02,
+                 get_find_ticker_predict, get_name_ticker, get_name_ticker_01,
+                 get_name_ticker_02, get_name_ticker_predict,
+                 predict_next_days, send_crypto_avg, send_crypto_candle,
+                 send_stock_history, welcome)
 
 
 class TestWelcome(unittest.IsolatedAsyncioTestCase):
@@ -23,13 +25,17 @@ class TestWelcome(unittest.IsolatedAsyncioTestCase):
                 keyboard=[
                     [types.KeyboardButton(text="Динамика стоимости")],
                     [types.KeyboardButton(text="Динамика среднемесячной стоимости")],
-                    [types.KeyboardButton(text="Представление стоимости в виде торговых свечей")],
+                    [
+                        types.KeyboardButton(
+                            text="Представление стоимости в виде торговых свечей"
+                        )
+                    ],
                     [types.KeyboardButton(text="Предсказание на будущее")],
                     [types.KeyboardButton(text="Оставить отзыв")],
                 ],
                 resize_keyboard=True,
                 input_field_placeholder="Жми!!!",
-            )
+            ),
         )
 
 
@@ -47,8 +53,7 @@ class TestGetNameTicker(unittest.IsolatedAsyncioTestCase):
 
             # Проверяем, что функция answer была вызвана с ожидаемыми параметрами, используя ANY для reply_markup
             mock_message.answer.assert_called_once_with(
-                "Выберите монету:",
-                reply_markup=ANY
+                "Выберите монету:", reply_markup=ANY
             )
 
 
@@ -56,10 +61,12 @@ class TestGetFindTicker(unittest.IsolatedAsyncioTestCase):
     @patch("app.types.CallbackQuery")
     @patch("app.FSMContext")
     @patch("app.bot")
-    async def test_get_find_ticker_handler(self, mock_bot, mock_fsm_context, mock_callback_query):
+    async def test_get_find_ticker_handler(
+        self, mock_bot, mock_fsm_context, mock_callback_query
+    ):
         test_cases = [
             ("BTC-USD", "Вы выбрали BTC-USD."),
-            ("ETH-USD", "Вы выбрали ETH-USD.")
+            ("ETH-USD", "Вы выбрали ETH-USD."),
         ]
         for selected_coin, expected_message in test_cases:
             callback_instance = mock_callback_query.return_value
@@ -86,8 +93,11 @@ class TestGetFindTicker(unittest.IsolatedAsyncioTestCase):
             # Проверяем, что функция send_message была вызвана с ожидаемыми параметрами
             expected_calls = [
                 call(callback_instance.from_user.id, f"Вы выбрали {selected_coin}."),
-                call(callback_instance.from_user.id, "Введите временной интервал для построения графика в формате: "
-                                                     "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):")
+                call(
+                    callback_instance.from_user.id,
+                    "Введите временной интервал для построения графика в формате: "
+                    "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):",
+                ),
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
@@ -96,7 +106,9 @@ class TestSendStockHistory(unittest.IsolatedAsyncioTestCase):
     @patch("pre_processing.data_loader", new_callable=AsyncMock)
     @patch("plots.plot_history", new_callable=AsyncMock)
     @patch("app.bot", new_callable=AsyncMock)
-    async def test_send_stock_history_success(self, mock_bot, mock_data_loader, mock_plot_history):
+    async def test_send_stock_history_success(
+        self, mock_bot, mock_data_loader, mock_plot_history
+    ):
 
         # Устанавливаем состояние
         state = AsyncMock()
@@ -137,13 +149,17 @@ class TestSendStockHistory(unittest.IsolatedAsyncioTestCase):
             pass
 
         message.reply = AsyncMock(side_effect=async_reply)
-        message.text = "invalid_time_range_format"  # Неправильный формат временного интервала
+        message.text = (
+            "invalid_time_range_format"  # Неправильный формат временного интервала
+        )
 
         # Вызываем тестируемую функцию
         await send_stock_history(message, state)
 
         # Проверяем, что отправлено сообщение об ошибке
-        message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
+        message.reply.assert_called_once_with(
+            "Неверный формат временного интервала. Попробуй все заново."
+        )
 
 
 class TestGetNameTicker01(unittest.IsolatedAsyncioTestCase):
@@ -158,8 +174,7 @@ class TestGetNameTicker01(unittest.IsolatedAsyncioTestCase):
             await get_name_ticker_01(mock_message)
 
             mock_message.answer.assert_called_once_with(
-                "Выберите монету:",
-                reply_markup=ANY
+                "Выберите монету:", reply_markup=ANY
             )
 
 
@@ -167,11 +182,10 @@ class TestGetFindTicker01(unittest.IsolatedAsyncioTestCase):
     @patch("app.types.CallbackQuery")
     @patch("app.FSMContext")
     @patch("app.bot")
-    async def test_get_find_ticker_01_handler(self, mock_bot, mock_fsm_context, mock_callback_query):
-        test_cases = [
-            ("BTC-USD avg", "BTC-USD"),
-            ("ETH-USD avg", "ETH-USD")
-        ]
+    async def test_get_find_ticker_01_handler(
+        self, mock_bot, mock_fsm_context, mock_callback_query
+    ):
+        test_cases = [("BTC-USD avg", "BTC-USD"), ("ETH-USD avg", "ETH-USD")]
         for selected_coin, expected_message in test_cases:
             callback_instance = mock_callback_query.return_value
             callback_instance.data = selected_coin
@@ -197,9 +211,11 @@ class TestGetFindTicker01(unittest.IsolatedAsyncioTestCase):
             # Проверяем, что функция send_message была вызвана с ожидаемыми параметрами
             expected_calls = [
                 call(callback_instance.from_user.id, f"Вы выбрали {expected_message}."),
-                call(callback_instance.from_user.id,
-                     "Введите временной интервал для построения графика средней стоимости в формате: "
-                     "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):")
+                call(
+                    callback_instance.from_user.id,
+                    "Введите временной интервал для построения графика средней стоимости в формате: "
+                    "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):",
+                ),
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
@@ -208,7 +224,9 @@ class TestSendCryptoAvg(unittest.IsolatedAsyncioTestCase):
     @patch("pre_processing.data_loader", new_callable=AsyncMock)
     @patch("plots.viz_avg", new_callable=AsyncMock)
     @patch("app.bot", new_callable=AsyncMock)
-    async def test_send_stock_history_success(self, mock_bot, mock_data_loader, mock_plot_history):
+    async def test_send_stock_history_success(
+        self, mock_bot, mock_data_loader, mock_plot_history
+    ):
 
         # Устанавливаем состояние
         state = AsyncMock()
@@ -247,13 +265,17 @@ class TestSendCryptoAvg(unittest.IsolatedAsyncioTestCase):
             pass
 
         message.reply = AsyncMock(side_effect=async_reply)
-        message.text = "invalid_time_range_format"  # Неправильный формат временного интервала
+        message.text = (
+            "invalid_time_range_format"  # Неправильный формат временного интервала
+        )
 
         # Вызываем тестируемую функцию
         await send_crypto_avg(message, state)
 
         # Проверяем, что отправлено сообщение об ошибке
-        message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
+        message.reply.assert_called_once_with(
+            "Неверный формат временного интервала. Попробуй все заново."
+        )
 
 
 class TestGetNameTicker02(unittest.IsolatedAsyncioTestCase):
@@ -263,13 +285,14 @@ class TestGetNameTicker02(unittest.IsolatedAsyncioTestCase):
         mock_message.answer = AsyncMock()
 
         with patch("app.F") as mock_F:
-            mock_F.text.lower.return_value = "представление стоимости в виде торговых свечей"
+            mock_F.text.lower.return_value = (
+                "представление стоимости в виде торговых свечей"
+            )
 
             await get_name_ticker_02(mock_message)
 
             mock_message.answer.assert_called_once_with(
-                "Выберите монету:",
-                reply_markup=ANY
+                "Выберите монету:", reply_markup=ANY
             )
 
 
@@ -277,11 +300,10 @@ class TestGetFindTicker02(unittest.IsolatedAsyncioTestCase):
     @patch("app.types.CallbackQuery")
     @patch("app.FSMContext")
     @patch("app.bot")
-    async def test_get_find_ticker_02_handler(self, mock_bot, mock_fsm_context, mock_callback_query):
-        test_cases = [
-            ("BTC-USD candle", "BTC-USD"),
-            ("ETH-USD candle", "ETH-USD")
-        ]
+    async def test_get_find_ticker_02_handler(
+        self, mock_bot, mock_fsm_context, mock_callback_query
+    ):
+        test_cases = [("BTC-USD candle", "BTC-USD"), ("ETH-USD candle", "ETH-USD")]
         for selected_coin, expected_message in test_cases:
             callback_instance = mock_callback_query.return_value
             callback_instance.data = selected_coin
@@ -307,9 +329,11 @@ class TestGetFindTicker02(unittest.IsolatedAsyncioTestCase):
             # Проверяем, что функция send_message была вызвана с ожидаемыми параметрами
             expected_calls = [
                 call(callback_instance.from_user.id, f"Вы выбрали {expected_message}."),
-                call(callback_instance.from_user.id,
-                     "Введите временной интервал для построения свечного графика стоимости в формате: "
-                     "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):")
+                call(
+                    callback_instance.from_user.id,
+                    "Введите временной интервал для построения свечного графика стоимости в формате: "
+                    "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):",
+                ),
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
@@ -318,7 +342,9 @@ class TestSendCryptoCandle(unittest.IsolatedAsyncioTestCase):
     @patch("pre_processing.data_all", new_callable=AsyncMock)
     @patch("plots.viz_candle", new_callable=AsyncMock)
     @patch("app.bot", new_callable=AsyncMock)
-    async def test_send_stock_history_success(self, mock_bot, mock_data_loader, mock_plot_history):
+    async def test_send_stock_history_success(
+        self, mock_bot, mock_data_loader, mock_plot_history
+    ):
 
         # Устанавливаем состояние
         state = AsyncMock()
@@ -357,13 +383,17 @@ class TestSendCryptoCandle(unittest.IsolatedAsyncioTestCase):
             pass
 
         message.reply = AsyncMock(side_effect=async_reply)
-        message.text = "invalid_time_range_format"  # Неправильный формат временного интервала
+        message.text = (
+            "invalid_time_range_format"  # Неправильный формат временного интервала
+        )
 
         # Вызываем тестируемую функцию
         await send_crypto_candle(message, state)
 
         # Проверяем, что отправлено сообщение об ошибке
-        message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
+        message.reply.assert_called_once_with(
+            "Неверный формат временного интервала. Попробуй все заново."
+        )
 
 
 class TestGetNameTickerPredict(unittest.IsolatedAsyncioTestCase):
@@ -378,8 +408,7 @@ class TestGetNameTickerPredict(unittest.IsolatedAsyncioTestCase):
             await get_name_ticker_predict(mock_message)
 
             mock_message.answer.assert_called_once_with(
-                "Выберите монету:",
-                reply_markup=ANY
+                "Выберите монету:", reply_markup=ANY
             )
 
 
@@ -387,11 +416,10 @@ class TestGetFindTickerPredict(unittest.IsolatedAsyncioTestCase):
     @patch("app.types.CallbackQuery")
     @patch("app.FSMContext")
     @patch("app.bot")
-    async def test_get_find_ticker_predict(self, mock_bot, mock_fsm_context, mock_callback_query):
-        test_cases = [
-            ("BTC-USD_predict", "BTC-USD"),
-            ("ETH-USD_predict", "ETH-USD")
-        ]
+    async def test_get_find_ticker_predict(
+        self, mock_bot, mock_fsm_context, mock_callback_query
+    ):
+        test_cases = [("BTC-USD_predict", "BTC-USD"), ("ETH-USD_predict", "ETH-USD")]
         for selected_coin, expected_message in test_cases:
             callback_instance = mock_callback_query.return_value
             callback_instance.data = selected_coin
@@ -417,9 +445,11 @@ class TestGetFindTickerPredict(unittest.IsolatedAsyncioTestCase):
             # Проверяем, что функция send_message была вызвана с ожидаемыми параметрами
             expected_calls = [
                 call(callback_instance.from_user.id, f"Вы выбрали {expected_message}."),
-                call(callback_instance.from_user.id,
-                     "Введите число, соответствующее количеству дней для предсказания "
-                     "(например, 7):")
+                call(
+                    callback_instance.from_user.id,
+                    "Введите число, соответствующее количеству дней для предсказания "
+                    "(например, 7):",
+                ),
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
 
@@ -462,7 +492,7 @@ class TestGetCallback(unittest.IsolatedAsyncioTestCase):
             # Проверяем, что функция answer была вызвана с ожидаемыми параметрами, используя ANY для reply_markup
             mock_message.answer.assert_called_once_with(
                 "Ваша оценка приложения?:",
-                reply_markup=ANY  # Ожидаем, что reply_markup будет любым объектом
+                reply_markup=ANY,  # Ожидаем, что reply_markup будет любым объектом
             )
 
 
@@ -471,10 +501,7 @@ class TestGetFeedback(unittest.IsolatedAsyncioTestCase):
     @patch("app.types.CallbackQuery")
     @patch("app.FSMContext")
     async def test_get_feedback_good(self, mock_callback_query, mock_fsm_context):
-        test_cases = [
-            ("good", "Увидимся снова!"),
-            ("bed", "Больше не увидимся!")
-        ]
+        test_cases = [("good", "Увидимся снова!"), ("bed", "Больше не увидимся!")]
         for grade, wish in test_cases:
             callback_query = mock_callback_query.return_value
             callback_query.data = grade

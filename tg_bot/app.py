@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from models import arima_model
 from plots import plot_history, plot_predict, viz_avg, viz_candle
 from post_processing import get_data_for_plot, post_processing_data
-from pre_processing import data_loader, data_grp, data_all
+from pre_processing import data_all, data_grp, data_loader
 
 load_dotenv()
 
@@ -98,6 +98,7 @@ async def get_find_ticker(callback: types.CallbackQuery, state: FSMContext):
 
 # История цен на криптовалюты
 
+
 @dp.message(Form.time_range)
 async def send_stock_history(message: types.Message, state: FSMContext):
     """
@@ -138,11 +139,16 @@ async def send_stock_history(message: types.Message, state: FSMContext):
 
 # Формирует среднемесячную стоимость крипт. в заданном временном интервале
 
+
 @dp.message(F.text.lower() == "динамика среднемесячной стоимости")
 async def get_name_ticker_01(message: types.Message) -> None:
     builder = InlineKeyboardBuilder()
-    builder.add(types.InlineKeyboardButton(text="BTC-USD avg", callback_data="BTC-USD avg"))
-    builder.add(types.InlineKeyboardButton(text="ETH-USD avg", callback_data="ETH-USD avg"))
+    builder.add(
+        types.InlineKeyboardButton(text="BTC-USD avg", callback_data="BTC-USD avg")
+    )
+    builder.add(
+        types.InlineKeyboardButton(text="ETH-USD avg", callback_data="ETH-USD avg")
+    )
 
     await message.answer("Выберите монету:", reply_markup=builder.as_markup())
 
@@ -203,11 +209,20 @@ async def send_crypto_avg(message: types.Message, state: FSMContext):
 
 # Показывает динамику стоимости криптовалют в виде свечного графика
 
+
 @dp.message(F.text.lower() == "представление стоимости в виде торговых свечей")
 async def get_name_ticker_02(message: types.Message) -> None:
     builder = InlineKeyboardBuilder()
-    builder.add(types.InlineKeyboardButton(text="BTC-USD candle", callback_data="BTC-USD candle"))
-    builder.add(types.InlineKeyboardButton(text="ETH-USD candle", callback_data="ETH-USD candle"))
+    builder.add(
+        types.InlineKeyboardButton(
+            text="BTC-USD candle", callback_data="BTC-USD candle"
+        )
+    )
+    builder.add(
+        types.InlineKeyboardButton(
+            text="ETH-USD candle", callback_data="ETH-USD candle"
+        )
+    )
 
     await message.answer("Выберите монету:", reply_markup=builder.as_markup())
 
@@ -266,6 +281,7 @@ async def send_crypto_candle(message: types.Message, state: FSMContext):
 
 
 # Прогноз с помощью алгоритма ARIMA на криатовалюты
+
 
 @dp.message(F.text.lower() == "предсказание на будущее")
 async def get_name_ticker_predict(message: types.Message) -> None:
@@ -349,6 +365,7 @@ async def predict_next_days(message: types.Message, state: FSMContext):
 
 # Реализация логики оставления отзыва
 
+
 @dp.message(F.text.lower() == "оставить отзыв")
 async def get_callback(message: types.Message) -> None:
     builder = InlineKeyboardBuilder()
@@ -358,9 +375,7 @@ async def get_callback(message: types.Message) -> None:
     builder.add(
         types.InlineKeyboardButton(text="Приложение ужасное!", callback_data="bed")
     )
-    await message.answer(
-        "Ваша оценка приложения?:", reply_markup=builder.as_markup()
-    )
+    await message.answer("Ваша оценка приложения?:", reply_markup=builder.as_markup())
 
 
 @dp.callback_query(lambda query: query.data in ["good", "bed"])

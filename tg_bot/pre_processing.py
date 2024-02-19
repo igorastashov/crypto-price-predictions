@@ -32,8 +32,11 @@ async def data_grp(data, tickers):
     Функция группировки данных по дате и средней стоимости
     """
     data = data.reset_index()
-    df_grp = data.groupby(data['Date'].dt.strftime("%B %Y"))[tickers[0]].mean().reset_index()
-    df_grp['Date'] = pd.to_datetime(df_grp['Date'], format='%B %Y')  # Преобразование столбца Date в формат даты
-    df_grp = df_grp.sort_values(by='Date')  # Сортировка по столбцу Date
+    df_grp = (
+        data.groupby(data["Date"].dt.strftime("%B %Y"))[tickers[0]].mean().reset_index()
+    )
+    df_grp["Date"] = pd.to_datetime(
+        df_grp["Date"], format="%B %Y"
+    )  # Преобразование столбца Date в формат даты
+    df_grp = df_grp.sort_values(by="Date")  # Сортировка по столбцу Date
     return df_grp
-
