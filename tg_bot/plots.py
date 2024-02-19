@@ -1,6 +1,7 @@
 import io
-import plotly.graph_objects as go
+
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from aiogram.types import BufferedInputFile
 
 
@@ -52,38 +53,54 @@ async def plot_predict(data):
     return plot
 
 
-#Визуализация с помощью библиотеки plotly среднемесячной цены криптовалют
+# Визуализация с помощью библиотеки plotly среднемесячной цены криптовалют
+
 
 async def viz_avg(df_grp, tickers):
-    
-    
+
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(x=df_grp['Date'], y=df_grp[tickers[0]], mode='lines+markers', name=tickers[0]))
+    fig.add_trace(
+        go.Scatter(
+            x=df_grp["Date"],
+            y=df_grp[tickers[0]],
+            mode="lines+markers",
+            name=tickers[0],
+        )
+    )
 
     fig.update_layout(
-        title='Динамика среднемесячной стоимости по периоду ' + tickers[0],
-        xaxis_title='Месяц - год',
-        yaxis_title='Стоимость , USD',
+        title="Динамика среднемесячной стоимости по периоду " + tickers[0],
+        xaxis_title="Месяц - год",
+        yaxis_title="Стоимость , USD",
         xaxis_tickangle=-45,
     )
 
     img_bytes = fig.to_image(format="png")
 
     file = BufferedInputFile(img_bytes, filename="avg_price.png")
-    
+
     return file
 
 
-#Визуализация данных стоимости криптовалют в виде свечей с помощью библиоткеи plotly
+# Визуализация данных стоимости криптовалют в виде свечей с помощью библиоткеи plotly
+
 
 async def viz_candle(all_data):
 
-    fig = go.Figure(data=[go.Candlestick(x=all_data.index, open=all_data['Open'], high=all_data['High'], low=all_data['Low'], close=all_data['Close'])])
+    fig = go.Figure(
+        data=[
+            go.Candlestick(
+                x=all_data.index,
+                open=all_data["Open"],
+                high=all_data["High"],
+                low=all_data["Low"],
+                close=all_data["Close"],
+            )
+        ]
+    )
     fig.show()
-
 
     img_bytes = fig.to_image(format="png")
     file = BufferedInputFile(img_bytes, filename="candle_price.png")
     return file
-    
