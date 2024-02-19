@@ -19,15 +19,18 @@ async def data_loader(start_date, end_date, tickers, col_value):
     return data
 
 
-#Функция выгрузки данных в нужном формате с yfinance
-
 async def data_all(start_date, end_date, tickers):
+    """
+    Функция выгрузки данных в нужном формате с yfinance
+    """
     df = pd.DataFrame(yf.download(tickers[0], start=start_date, end=end_date))
     return df
 
-#Функция группировки данных по дате и средней стоимости
 
 async def data_grp(data, tickers):
+    """
+    Функция группировки данных по дате и средней стоимости
+    """
     data = data.reset_index()
     df_grp = data.groupby(data['Date'].dt.strftime("%B %Y"))[tickers[0]].mean().reset_index()
     df_grp['Date'] = pd.to_datetime(df_grp['Date'], format='%B %Y')  # Преобразование столбца Date в формат даты

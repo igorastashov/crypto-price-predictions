@@ -1,7 +1,13 @@
 import unittest
 from unittest.mock import MagicMock, AsyncMock, patch, ANY, call
 from aiogram import types
-from app import welcome, get_name_ticker, get_find_ticker
+from app import welcome, get_name_ticker, get_find_ticker, send_stock_history
+from app import Form
+from pre_processing import data_loader
+from plots import plot_history
+
+import pandas as pd
+from aiogram.filters.state import State, StatesGroup
 
 
 class TestWelcome(unittest.IsolatedAsyncioTestCase):
@@ -85,6 +91,50 @@ class TestGetFindTicker(unittest.IsolatedAsyncioTestCase):
                                                       "YYYY-MM-DD YYYY-MM-DD (например, 2023-01-01 2023-12-31):")
             ]
             mock_bot.send_message.assert_has_calls(expected_calls, any_order=False)
+
+
+class TestSendStockHistory(unittest.IsolatedAsyncioTestCase):
+    @patch("pre_processing.data_loader", new_callable=AsyncMock)
+    @patch("plots.plot_history", new_callable=AsyncMock)
+    @patch("app.bot", new_callable=AsyncMock)
+    async def test_send_stock_history_success(self, mock_bot, mock_data_loader, mock_plot_history):
+
+        # Устанавливаем состояние
+        state = AsyncMock()
+
+        async def async_update_data(*args, **kwargs):
+            return {"time_range": "2023-01-01 2023-12-31"}
+
+        state.update_data = AsyncMock(side_effect=async_update_data)
+
+        # Задаем сообщение от пользователя
+        message = MagicMock()
+
+        async def async_reply(*args, **kwargs):
+            pass
+
+        message.reply = AsyncMock(side_effect=async_reply)
+        message.text = "2023-01-01 2023-12-31"  # Устанавливаем текст сообщения
+        message.chat.id = 123456789  # Пример ID чата
+
+        # Устанавливаем ожидаемый результат загрузки данных
+        data_sample = pd.DataFrame({"Date": ['2024-01-01', '2024-01-02', '2024-02-03'],
+                                    "BTC-USD": [10, 20, 30]}).set_index('Date', inplace=False)
+
+        mock_data_loader.return_value = data_sample
+
+        try:
+            # Вызываем тестируемую функцию
+            await send_stock_history(message, state)
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+
+        # Проверяем, что функции data_loader и plot_history были вызваны с правильными аргументами
+        mock_data_loader.assert_called_once_with("2023-01-01", "2023-12-31", ['BTC-USD'], "Adj Close")
+        mock_plot_history.assert_called_once_with(data_sample, ['BTC-USD'])
+
+        # Проверяем, что метод send_photo объекта bot был вызван с ожидаемыми аргументами
+        mock_bot.return_value.send_photo.assert_called_once_with(message.chat.id, photo=ANY)
 
 
 

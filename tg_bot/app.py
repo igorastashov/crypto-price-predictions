@@ -28,7 +28,7 @@ BACK_DAYS = 15
 TICKERS_PREDICT = []
 
 # Тикеры криптовалют
-TICKERS = []
+TICKERS = ['BTC-USD']
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
