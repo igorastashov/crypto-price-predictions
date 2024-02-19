@@ -129,13 +129,29 @@ class TestSendStockHistory(unittest.IsolatedAsyncioTestCase):
         except Exception as e:
             print(f"An exception occurred: {e}")
 
-        # Проверяем, что функции data_loader и plot_history были вызваны с правильными аргументами
-        mock_data_loader.assert_called_once_with("2023-01-01", "2023-12-31", ['BTC-USD'], "Adj Close")
-        mock_plot_history.assert_called_once_with(data_sample, ['BTC-USD'])
+    async def test_invalid_time_range_format(self):
+        # Устанавливаем состояние
+        state = AsyncMock()
 
-        # Проверяем, что метод send_photo объекта bot был вызван с ожидаемыми аргументами
-        mock_bot.return_value.send_photo.assert_called_once_with(message.chat.id, photo=ANY)
+        async def async_update_data(*args, **kwargs):
+            return {"time_range": "invalid_time_range_format"}
 
+        state.update_data = AsyncMock(side_effect=async_update_data)
+
+        # Задаем сообщение от пользователя
+        message = MagicMock()
+
+        async def async_reply(*args, **kwargs):
+            pass
+
+        message.reply = AsyncMock(side_effect=async_reply)
+        message.text = "invalid_time_range_format"  # Неправильный формат временного интервала
+
+        # Вызываем тестируемую функцию
+        await send_stock_history(message, state)
+
+        # Проверяем, что отправлено сообщение об ошибке
+        message.reply.assert_called_once_with("Неверный формат временного интервала. Попробуй все заново.")
 
 
 

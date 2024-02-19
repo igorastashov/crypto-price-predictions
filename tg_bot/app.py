@@ -28,7 +28,7 @@ BACK_DAYS = 15
 TICKERS_PREDICT = []
 
 # Тикеры криптовалют
-TICKERS = ['BTC-USD']
+TICKERS = []
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
@@ -118,7 +118,7 @@ async def send_stock_history(message: types.Message, state: FSMContext):
     time_range = await state.update_data(time_range=message.text)
     if not pattern.match(time_range["time_range"]):
         await message.reply(
-            "Неверный формат временного интервала." " Попробуй все заново"
+            "Неверный формат временного интервала. Попробуй все заново."
         )
         return
 
